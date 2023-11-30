@@ -75,3 +75,33 @@ def model_data_preprocessing(df):
     df_final.set_index('datetime', inplace = True)
 
     return df_final
+
+
+def prophet_preprocessing_one_station(df, station_number, entry_exit='entry'):
+    """
+    Preprocess dataframe for Prophet model using general_preprocessing and
+    model_data_preprocessing functions. User can choose one station number
+    to isolate and weather passengers are entering or exiting
+    -> returns a dataframe with the following mandatory columns:
+    'ds' as datetime
+    'y' as target (number of people entering or exiting)
+    """
+    #using the two functions above to start preprocessing
+    df = general_preprocessing(df)
+    df = model_data_preprocessing(df)
+
+    #Isolating the entries of one station
+    df = df[df['station_number'] == station_number]
+    df = df[df['entry/exit'] == entry_exit]
+
+    #renaming columns adapted to prophet
+    df.rename(columns={'value':'y'}, inplace=True)
+    df.index.names = ['ds']
+
+    #sorting dates as ascending
+    df.sort_index(ascending=True, inplace=True)
+
+    #resetting index to have datetimes as a column
+    df.reset_index(inplace=True)
+
+    return df
