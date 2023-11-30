@@ -11,6 +11,19 @@ def general_preprocessing(df):
     df --> expecting dataframe crowding metro
     """
 
+    #translate
+    dic = {
+        '신촌': 'Sinchon',
+        '교대(법원.검찰청)': 'Seoul National Univ. of Education(Court & Prosecutors Office)',
+        '화랑대(서울여대입구)': 'Hwarangdae',
+        '남한산성입구(성남법원.검찰청)': 'Namhansanseong',
+        '동대문역사문화공원(DDP)(DDP)': 'Dongdaemun History Culture Park',
+        '낙성대': 'Nakseongdae',
+        '용마산': 'Yongmasan'
+        }
+
+    df.replace({'station_name': dic}, inplace = True)
+
     #rename
     df.rename(columns = {'06': '05'}, inplace = True )
     df.rename(columns = {'06-07': '06'}, inplace = True)
@@ -77,31 +90,51 @@ def model_data_preprocessing(df):
     return df_final
 
 
-def prophet_preprocessing_one_station(df, station_number, entry_exit='entry'):
+def prophet_preprocessing_one_station(df, station_name, metro_line, entry_exit='exit'):
     """
-    Preprocess dataframe for Prophet model using general_preprocessing and
-    model_data_preprocessing functions. User can choose one station number
-    to isolate and weather passengers are entering or exiting
+    Preprocess dataframe for Prophet model using preprocess lstm function.
+    User can isolate one station and choose between entry or exit.
     -> returns a dataframe with the following mandatory columns:
     'ds' as datetime
     'y' as target (number of people entering or exiting)
     """
-    #using the two functions above to start preprocessing
+    df = preprocess_lstm(df, entry_exit)
+
+    #choosing which station to look at for a given line
+    station = f"{station_name} {metro_line}"
+    df = pd.DataFrame(df[station])
+
+    #setting the right columns for prophet
+    df.reset_index(inplace=True)
+    df.rename(columns={'datetime': 'ds', station : 'y'}, inplace=True)
+
+    return df
+
+
+def preprocess_lstm(df, exit_entry:str):
+    """
+    Preprocessing for lstm model\n
+    df --> Crowd dataframe expected\n
+    exit_entry --> Choose between entry or exit depending on what you need\n
+    """
+
     df = general_preprocessing(df)
     df = model_data_preprocessing(df)
 
-    #Isolating the entries of one station
-    df = df[df['station_number'] == station_number]
-    df = df[df['entry/exit'] == entry_exit]
-
-    #renaming columns adapted to prophet
-    df.rename(columns={'value':'y'}, inplace=True)
-    df.index.names = ['ds']
-
-    #sorting dates as ascending
-    df.sort_index(ascending=True, inplace=True)
-
-    #resetting index to have datetimes as a column
     df.reset_index(inplace=True)
 
-    return df
+    df_exit = df[df['entry/exit'] == exit_entry]
+    df_exit['station_name_line'] = df_exit['station_name'] + ' ' + df_exit['line'].apply(str)
+    df_exit.reset_index(inplace = True)
+
+    df_lstm_exit = pd.pivot(df_exit.drop(columns = ['station_name','line', 'station_number', 'entry/exit']), index=['station_name_line'], columns='datetime', values='value')
+
+    df_lstm_exit_T = df_lstm_exit.T
+
+    for column in df_lstm_exit_T.columns:
+        if df_lstm_exit_T[column].isna().sum() > 0:
+            df_lstm_exit_T.drop(columns=column, inplace=True)
+        else:
+            pass
+
+    return df_lstm_exit_T
