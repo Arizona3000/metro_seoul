@@ -6,6 +6,10 @@ import numpy as np
 
 
 def general_preprocessing(df):
+    """
+    Preprocess data, rename columns, add all hours, reorder columns, convert to datetime\n
+    df --> expecting dataframe crowding metro
+    """
 
     #rename
     df.rename(columns = {'06': '05'}, inplace = True )
@@ -49,6 +53,10 @@ def general_preprocessing(df):
 
 
 def model_data_preprocessing(df):
+    """
+    Preprocess dataframe for Auto-Arima model\n
+    df --> preprocessed crowding dataframe expected
+    """
 
     #melt - reshape
     df_final = pd.melt(df, id_vars=['date','line', 'station_number',
