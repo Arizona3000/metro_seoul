@@ -90,11 +90,32 @@ def model_data_preprocessing(df):
     return df_final
 
 
+def prophet_preprocessing_one_station(df, station_name, metro_line, entry_exit='exit'):
+    """
+    Preprocess dataframe for Prophet model using preprocess lstm function.
+    User can isolate one station and choose between entry or exit.
+    -> returns a dataframe with the following mandatory columns:
+    'ds' as datetime
+    'y' as target (number of people entering or exiting)
+    """
+    df = preprocess_lstm(df, entry_exit)
+
+    #choosing which station to look at for a given line
+    station = f"{station_name} {metro_line}"
+    df = pd.DataFrame(df[station])
+
+    #setting the right columns for prophet
+    df.reset_index(inplace=True)
+    df.rename(columns={'datetime': 'ds', station : 'y'}, inplace=True)
+
+    return df
+
+
 def preprocess_lstm(df, exit_entry:str):
     """
     Preprocessing for lstm model\n
-    df --> Crowd dataframe expected
-    exit_entry --> Choose between entry or exit depending on what you need
+    df --> Crowd dataframe expected\n
+    exit_entry --> Choose between entry or exit depending on what you need\n
     """
 
     df = general_preprocessing(df)
@@ -116,4 +137,4 @@ def preprocess_lstm(df, exit_entry:str):
         else:
             pass
 
-    return df_lstm_exit_T.T
+    return df_lstm_exit_T
