@@ -1,8 +1,10 @@
-# Put preprocessing here
-
-
 import pandas as pd
 import numpy as np
+
+
+################################################################################
+                            # GENERAL PREPROCESSING #
+################################################################################
 
 
 def general_preprocessing(df):
@@ -65,6 +67,12 @@ def general_preprocessing(df):
     return df
 
 
+
+################################################################################
+                         # MODEL DATA PREPROCESSING #
+################################################################################
+
+
 def model_data_preprocessing(df):
     """
     Preprocess dataframe for Auto-Arima model\n
@@ -90,6 +98,13 @@ def model_data_preprocessing(df):
     return df_final
 
 
+
+
+################################################################################
+                         # PROPHET PREPROCESSING #
+################################################################################
+
+
 def prophet_preprocessing_one_station(df, station_name, metro_line, entry_exit='exit'):
     """
     Preprocess dataframe for Prophet model using preprocess lstm function.
@@ -111,6 +126,13 @@ def prophet_preprocessing_one_station(df, station_name, metro_line, entry_exit='
     return df
 
 
+
+
+################################################################################
+                          # LSTM PREPROCESSING #
+################################################################################
+
+
 def preprocess_lstm(df, exit_entry:str):
     """
     Preprocessing for lstm model\n
@@ -127,7 +149,9 @@ def preprocess_lstm(df, exit_entry:str):
     df_exit['station_name_line'] = df_exit['station_name'] + ' ' + df_exit['line'].apply(str)
     df_exit.reset_index(inplace = True)
 
-    df_lstm_exit = pd.pivot(df_exit.drop(columns = ['station_name','line', 'station_number', 'entry/exit']), index=['station_name_line'], columns='datetime', values='value')
+    df_lstm_exit = pd.pivot(df_exit.drop(columns = ['station_name','line', 'station_number',
+                                            'entry/exit']), index=['station_name_line'],
+                                            columns='datetime', values='value')
 
     df_lstm_exit_T = df_lstm_exit.T
 

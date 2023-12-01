@@ -2,3 +2,5 @@ gcloud
 pip install httplib2==0.15.0
 pip install google-api-python-client==1.6
 prophet
+statsforecast
+tensorflow
