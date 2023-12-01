@@ -73,7 +73,7 @@ def general_preprocessing(df):
 ################################################################################
 
 
-def model_data_preprocessing(df):
+def model_data_preprocessing(df):  #intégrer genal_preprocessing
     """
     Preprocess dataframe for Auto-Arima model\n
     df --> preprocessed crowding dataframe expected
@@ -129,7 +129,7 @@ def prophet_preprocessing_one_station(df, station_name, metro_line, entry_exit='
 
 
 ################################################################################
-                          # LSTM PREPROCESSING #
+                          # LSTM PREPROCESSING # #A REFAIRE!!!!!!!!!!
 ################################################################################
 
 
