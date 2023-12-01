@@ -11,7 +11,7 @@ def cred(path_to_json_key : str):
                                                                scopes=['https://www.googleapis.com/auth/cloud-platform'])
     return storage.Client(credentials=credentials, project='metro-seoul')
 
-def upload(file_path : str, file_name : str, path_to_json_key : str):
+def upload(pickle, file_name : str, path_to_json_key : str):
     """
     Upload a file on the bucket 'seoul_bucket'\n
     file_path --> your path to the file you want to upload \n
@@ -22,7 +22,8 @@ def upload(file_path : str, file_name : str, path_to_json_key : str):
         client = cred(path_to_json_key)
         bucket = client.get_bucket('seoul_bucket')
         blob = bucket.blob(file_name)
-        blob.upload_from_filename(file_path)
+        #blob.upload_from_filename(pickle)
+        blob.upload_from_file(pickle)
         return 'uploaded file!'
     except Exception as e:
         return f'An error occurred'

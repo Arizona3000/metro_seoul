@@ -12,7 +12,7 @@ import pickle
 from sklearn.metrics import mean_absolute_percentage_error as mape
 
 from preprocess import general_preprocessing, model_data_preprocessing
-
+from gcp.setup import upload
 
 def choose_model(df, station_list, key_to_json):
 
@@ -64,3 +64,10 @@ def choose_model(df, station_list, key_to_json):
 
 
         if mape_prophet > mape_mstl:
+            print('yes')
+            serialized_model = pickle.dumps(sf)
+            print(upload(serialized_model,file_name=f'models/MSTL/MSTL_{station_number}.pkl', path_to_json_key='/Users/victor/gcp/metro-seoul-86af79318438.json'))
+
+        print('finish')
+
+        break
