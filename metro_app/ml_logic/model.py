@@ -1,9 +1,14 @@
-# Put the code for the model here
+
+################################################################################
+                            # PROPHET MODEL #
+################################################################################
+
 import pandas as pd
-from prophet import Prophet
-import itertools
 import numpy as np
 import seaborn as sns
+from prophet import Prophet
+import itertools
+
 
 def train_prophet(df, changepoint_prior_scale=0.002, seasonality_prior_scale=3.0,
                   holidays_prior_scale=0.02, seasonality_mode='multiplicative'):
@@ -32,3 +37,14 @@ def predict_prophet(model, days):
     prediction = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
     return prediction
+
+
+
+################################################################################
+                            # AUTOARIMA MODEL  #
+################################################################################
+
+
+################################################################################
+                            # LSTM MODEL  #
+################################################################################
