@@ -66,7 +66,8 @@ def choose_model(df, station_list, key_to_json):
         if mape_prophet > mape_mstl:
             print('yes')
             serialized_model = pickle.dumps(sf)
-            print(upload(serialized_model,file_name=f'models/MSTL/MSTL_{station_number}.pkl', path_to_json_key='/Users/victor/gcp/metro-seoul-86af79318438.json'))
+            print(upload(serialized_model,file_name=f'models/MSTL/MSTL_station_{station_number}.pkl', path_to_json_key=key_to_json))
+            print('Check')
 
         print('finish')
 
