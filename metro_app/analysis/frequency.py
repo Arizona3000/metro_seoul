@@ -1,1 +1,5 @@
-# frequency def
+
+
+
+def get_frequency_graph():
+    pass
