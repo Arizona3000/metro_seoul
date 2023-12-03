@@ -4,3 +4,6 @@ pip install google-api-python-client==1.6
 prophet
 statsforecast
 tensorflow
+fastapi
+uvicorn
+openpyxl
