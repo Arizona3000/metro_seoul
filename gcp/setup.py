@@ -47,6 +47,24 @@ def upload_file(file, file_name : str, path_to_json_key : str):
     except Exception as e:
         return f'An error occurred'
 
+def upload_from_file(file, file_name : str, path_to_json_key : str):
+    """
+    Upload a file on the bucket 'seoul_bucket', from file\n
+    file_path --> your path to the file you want to upload \n
+    file_name --> the name you want to give to your file\n
+    path_to_json_key --> path to your json key\n
+    """
+    try:
+        client = cred(path_to_json_key)
+        bucket = client.get_bucket('seoul_bucket')
+        blob = bucket.blob(file_name)
+        #blob.upload_from_filename(pickle)
+        print(file)
+        blob.upload_from_file(file)
+        return 'uploaded file!'
+    except Exception as e:
+        return f'An error occurred'
+
 def download(destination_file_name : str, file_name : str, path_to_json_key : str):
     """
     Download a file on the bucket 'seoul_bucket'\n
