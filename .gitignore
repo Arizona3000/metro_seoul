@@ -1,6 +1,6 @@
 #mes ajouts
 raw_data/
-
+notebooks/lightning_logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

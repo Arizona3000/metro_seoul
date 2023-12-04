@@ -7,6 +7,11 @@ from gcp.setup import view_file
 
 
 def get_data_frequency(data, date_limit):
+    """
+    Function that returns a dataframe of average crowding per station per day\n
+    data --> the crowding dataframe
+    date_limit --> the number of days you want for the average
+    """
     df_prepro = general_preprocessing(data)
     df_prepro = df_prepro.groupby(['date', 'line', 'station_number', 'station_name'])[['01',
        '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13',
@@ -32,10 +37,9 @@ def get_data_for_timetable(file_name_gcp, day, hours, number_of_trains, key_to_j
     the direction of the metro. \n
     file_name_gcp --> the name of the file in the bucket\n
     day --> between 'weekdays', 'saturday', 'sunday'\n
-    hours --> the hours requested by the user
+    hours --> the hours requested by the user\n
     number_of_trains --> the number of rows you want in the dataframe\n
-    key_to_json --> the key to your json file
-
+    key_to_json --> the key to your json file\n
     """
 
     timetable_string = view_file(f'data/timetable/{file_name_gcp}', key_to_json)
