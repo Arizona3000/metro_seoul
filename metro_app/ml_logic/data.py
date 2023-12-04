@@ -1,8 +1,9 @@
 # Put the data imports/exports here
-
+import sys
+sys.path.append("/Users/yannickdeza/code/wagon_project/metro_seoul")
 import pandas as pd
 import io
-from preprocess import general_preprocessing
+from metro_app.ml_logic.preprocess import general_preprocessing
 from gcp.setup import view_file
 import numpy as np
 import plotly.express as px
@@ -59,14 +60,12 @@ def get_data_for_timetable(file_name_gcp, day, hours, number_of_trains, key_to_j
 
 
 
-from metro_app.ml_logic.preprocess import general_preprocessing
-
 
 def prediction_data():
 
     """This function pre-process the data on passenger flows to make predictions on a single day"""
 
-    data = pd.read_csv('passenger_flow.csv')
+    data = pd.read_csv('raw_data/passenger_flow.csv')
     new_data = general_preprocessing(data)
 
     # 2) I filter for a specific date
@@ -86,7 +85,7 @@ def translation_data():
     """ This function pre-process the translation data,
     where each metro station is translated from korean to english"""
 
-    map = pd.read_excel('translation_data.xlsx')
+    map = pd.read_excel('raw_data/translation_data.xlsx')
     #1) I rename columns
     map.drop(map.columns[0:2], axis=1, inplace=True)
     map.rename(columns={map.columns[1]: 'station_name', map.columns[0]: 'korean_name'}, inplace=True)
@@ -101,7 +100,7 @@ def location_data():
     """This function pre-process the location data,
     where korean station names are associated with GPS coordinates (lat & lon)"""
 
-    loc = pd.read_csv('location_data.csv')
+    loc = pd.read_csv('raw_data/location_data.csv')
     loc.drop(columns=['Unnamed: 0'], inplace=True)
     loc.rename(columns={'name': 'korean_name'}, inplace=True)
     # I clean the "line" column and I only keep lines from 1 to 8
@@ -136,12 +135,17 @@ def plot_data():
     predictions = prediction_data()
     location_and_translation = merge_location_translation()
 
+    location_and_translation.drop(columns=['line', 'no'], inplace=True)
+
     complete = predictions.merge(location_and_translation, on='station_name')
     complete.drop(columns=['korean_name'], inplace=True)
     columns_to_unpivot = complete.columns[3:22].tolist()
     final_df = pd.melt(complete, id_vars=['station_name', 'line', 'entry/exit', 'lat', 'lng'],
             value_vars=columns_to_unpivot)
     final_df.rename(columns={'value': 'n_passengers', 'variable': 'hour'}, inplace=True)
+
+    final_df.drop_duplicates(inplace=True)
+
 
     return final_df
 

@@ -4,7 +4,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from metro_app.ml_logic.preprocess import general_preprocessing
-from ml_logic.data import plot_data, lines_data
+from metro_app.ml_logic.data import plot_data, lines_data
 
 
 
@@ -77,8 +77,5 @@ def commuter_network(station, line):
             mode='markers',
             marker=dict(size=4, color='lightsalmon'),
             showlegend=False))
-
-
-
 
     fig.show()
