@@ -18,10 +18,11 @@ def prophet_train_predict(df, days=3,
                   holidays_prior_scale=10.0, seasonality_mode='multiplicative'):
     """
     Train a Prophet model with best tested parameters.
-    Predicts values for one station
-    returns a model fitted on a dataframe with one station.
-    df needs to be preprocessed with prophet_preprocessing_one_station function.
+    Predicts values for one station during a given horizon (days).
+    df needs to be preprocessed with general_preprocessing(df) and
+    model_data_preprocessing(df)
     Holidays from South Korea are taken into account.
+    -> returns the model, the mape and the prediction
     """
 
     data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
