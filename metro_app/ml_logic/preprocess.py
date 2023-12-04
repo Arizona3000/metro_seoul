@@ -160,5 +160,6 @@ def preprocess_lstm(df, exit_entry:str):
             df_lstm_exit_T.drop(columns=column, inplace=True)
         else:
             pass
+    df_lstm_exit = df_lstm_exit_T.T
 
-    return df_lstm_exit_T
+    return df
