@@ -12,9 +12,10 @@ import pickle
 from sklearn.metrics import mean_absolute_percentage_error as mape
 
 from preprocess import general_preprocessing, model_data_preprocessing
-from gcp.setup import upload
+from model import prophet_train_predict
+from gcp.setup import upload, upload_from_file
 
-def choose_model(df, station_list, key_to_json):
+def choose_model(df, station_list, number_hours, key_to_json):
 
     df = general_preprocessing(df)
     df = model_data_preprocessing(df)
@@ -45,30 +46,55 @@ def choose_model(df, station_list, key_to_json):
             n_jobs=-1,
             )
 
-        forecast = sf.forecast(df = train, h = 24)
+        sf.fit(train)
 
-        mape_mstl = mape(forecast['MSTL'].values, test.head(24)['y'].values)
+        forecast = sf.predict(h = number_hours)
+
+        station_number = df_station.station_number.unique()[0]
+
+        forecast2 = forecast.copy()
+        forecast2['MSTL'] = forecast2.apply(lambda row: 0 if 0 <= row['ds'].hour <= 4 else row['MSTL'], axis=1)
+
+        forecast2['station_number'] = station_number
+
+        mape_mstl = mape(forecast2['MSTL'].values, test.head(number_hours)['y'].values)
 
 
         ## Prophet
 
+        model, mape_prophet, prediction = prophet_train_predict(df_station, days=3,
+                                                                changepoint_prior_scale=0.2, seasonality_prior_scale=10.0,
+                                                                holidays_prior_scale=10.0, seasonality_mode='multiplicative')
+
+        prediction_prophet = prediction[['ds', 'yhat']]
+
+        station_name = df_station.station_name.unique()[0]
 
 
+        prediction_prophet['unique_id'] = station_name
+        prediction_prophet['station_number'] = station_number
 
-        mape_prophet = 1
+
+        prediction_prophet = prediction[['unique_id', 'ds', 'yhat']]
+
+        prediction_prophet.rename(columns={'yhat':'MSTL'}, inplace=True)
+
 
 
         ## Station number
 
-        station_number = df_station.station_number.unique()[0]
+        #station_number = df_station.station_number.unique()[0]
 
 
         if mape_prophet > mape_mstl:
-            print('yes')
+            #print('yes')
             serialized_model = pickle.dumps(sf)
-            print(upload(serialized_model,file_name=f'models/MSTL/MSTL_station_{station_number}.pkl', path_to_json_key=key_to_json))
-            print('Check')
+            print(upload(serialized_model,file_name=f'models/model_station_{station_number}.pkl', path_to_json_key=key_to_json))
+            print(upload_from_file(forecast2, file_name=f'data/pred/data_pred_station_{station_number}.pkl', path_to_json_key=key_to_json ))
+            print('File has been uploaded to gcp')
 
-        print('finish')
-
-        break
+        else:
+            serialized_model = pickle.dumps(model)
+            print(upload(serialized_model,file_name=f'models/model_station_{station_number}.pkl', path_to_json_key=key_to_json))
+            print(upload_from_file(forecast2, file_name=f'data/pred/data_pred_station_{station_number}.pkl', path_to_json_key=key_to_json ))
+            print('File has been uploaded to gcp')
