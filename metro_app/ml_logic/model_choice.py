@@ -14,7 +14,7 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from preprocess import general_preprocessing, model_data_preprocessing
 from gcp.setup import upload
 
-def choose_model(df, station_list, key_to_json):
+def choose_model(df, station_list, number_hours, key_to_json):
 
     df = general_preprocessing(df)
     df = model_data_preprocessing(df)
@@ -45,9 +45,14 @@ def choose_model(df, station_list, key_to_json):
             n_jobs=-1,
             )
 
-        forecast = sf.forecast(df = train, h = 24)
+        sf.fit(train)
 
-        mape_mstl = mape(forecast['MSTL'].values, test.head(24)['y'].values)
+        forecast = sf.predict(h = number_hours)
+
+        forecast2 = forecast.copy()
+        forecast2['MSTL'] = forecast2.apply(lambda row: 0 if 0 <= row['ds'].hour <= 4 else row['MSTL'], axis=1)
+
+        mape_mstl = mape(forecast['MSTL'].values, test.head(number_hours)['y'].values)
 
 
         ## Prophet
