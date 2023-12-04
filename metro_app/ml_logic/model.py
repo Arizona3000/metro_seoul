@@ -8,35 +8,78 @@ import numpy as np
 import seaborn as sns
 from prophet import Prophet
 import itertools
+from sklearn.metrics import mean_absolute_percentage_error as mape
+import plotly.express as px
 
 
-def train_prophet(df, changepoint_prior_scale=0.002, seasonality_prior_scale=3.0,
-                  holidays_prior_scale=0.02, seasonality_mode='multiplicative'):
+
+def prophet_train_predict(df, days=3,
+                  changepoint_prior_scale=0.2, seasonality_prior_scale=10.0,
+                  holidays_prior_scale=10.0, seasonality_mode='multiplicative'):
     """
-    Train a Prophet model with default parameters based on a cross validation.
-    returns a model fitted on a dataframe with one station.
-    df needs to be preprocessed with prophet_preprocessing_one_station function.
+    Train a Prophet model with best tested parameters.
+    Predicts values for one station during a given horizon (days).
+    df needs to be preprocessed with general_preprocessing(df) and
+    model_data_preprocessing(df)
     Holidays from South Korea are taken into account.
-    """
-    m = Prophet(changepoint_prior_scale, seasonality_prior_scale,
-                  holidays_prior_scale, seasonality_mode)
-
-    m.add_country_holidays(country_name='KR')
-
-    m.fit(df)
-    return m
-
-def predict_prophet(model, days):
-    """
-    Predicts the number of people in a given metro stop.
-    according to model (m) for a given horizon (days)
+    -> returns the model, the mape and the prediction
     """
 
-    future = model.make_future_dataframe(periods=days*24, freq='h', include_history=False)
+    data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
+
+    data_train = data.iloc[:-24*days]
+    data_test = data.iloc[-24*days:]
+
+    #shorten the train data
+    data_train = data_train.iloc[-24*500:]
+
+    data_train['is_morning_peak'] = ((data_train['ds'].dt.hour == 8) & (data_train['ds'].dt.dayofweek <= 5)).astype(int)
+    data_train['is_afternoon_peak'] = ((data_train['ds'].dt.hour == 18) & (data_train['ds'].dt.dayofweek <= 5)).astype(int)
+    data_train['is_closed'] = ((data_train['ds'].dt.hour >= 0) & (data_train['ds'].dt.hour <= 4)).astype(int)
+
+    #Instantiate the model with defined params
+    model = Prophet(changepoint_prior_scale=changepoint_prior_scale,
+                    seasonality_prior_scale=seasonality_prior_scale,
+                    holidays_prior_scale=holidays_prior_scale,
+                    seasonality_mode=seasonality_mode)
+
+    #Adding regressors and seasonality for better predictions
+    model.add_regressor(name='is_closed', mode='multiplicative')
+    model.add_seasonality(name='morning_peak', period=1, fourier_order=8, condition_name='is_morning_peak')
+    model.add_seasonality(name='afternoon_peak', period=1, fourier_order=8, condition_name='is_afternoon_peak')
+    model.add_country_holidays(country_name='SK')
+    model.fit(data_train)
+
+    # Create a future dataframe for predictions
+    future = model.make_future_dataframe(periods=days*24, include_history=False, freq='h')  # Forecasting for the next week
+    future['is_morning_peak'] = ((future['ds'].dt.hour >= 8) & (future['ds'].dt.hour <= 9) & (future['ds'].dt.dayofweek <= 5)).astype(int)
+    future['is_afternoon_peak'] = ((future['ds'].dt.hour >= 17) & (future['ds'].dt.hour <= 19) & (future['ds'].dt.dayofweek <= 5)).astype(int)
+    future['is_closed'] = ((future['ds'].dt.hour >= 0) & (future['ds'].dt.hour <= 4)).astype(int)
+    future['is_weekend'] = (future['ds'].dt.dayofweek >= 5).astype(int)
+    print(future.columns)
+
+    print(future.head(20))
+    # Generate predictions
+
     forecast = model.predict(future)
+    forecast.loc[forecast['is_closed'] != 0, 'yhat'] = 0
+    forecast.loc[forecast['morning_peak'] > 2, 'yhat'] = forecast.loc[forecast['morning_peak'] > 2, 'yhat'] * 1.2
+    forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] = forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] * 1.18
     prediction = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
-    return prediction
+    mape_prophet = mape(prediction['yhat'].values, data_test['y'].values)
+
+
+    return model, mape_prophet, prediction
+
+def plot_evaluate(df, prediction, days=3):
+
+    data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
+    data_test = data.iloc[-24*days:]
+    comparaison = prediction.merge(data_test, on='ds')
+    fig = px.line(comparaison, x="ds", y=["y", 'yhat'])
+
+    fig.show()
 
 
 
