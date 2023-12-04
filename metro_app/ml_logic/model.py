@@ -59,8 +59,8 @@ def prophet_train_predict(df, days=3,
     print(future.columns)
 
     print(future.head(20))
-    # Generate predictions
 
+    # Generate predictions
     forecast = model.predict(future)
     forecast.loc[forecast['is_closed'] != 0, 'yhat'] = 0
     forecast.loc[forecast['morning_peak'] > 2, 'yhat'] = forecast.loc[forecast['morning_peak'] > 2, 'yhat'] * 1.2
