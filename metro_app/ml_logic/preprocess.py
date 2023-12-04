@@ -162,4 +162,4 @@ def preprocess_lstm(df, exit_entry:str):
             pass
     df_lstm_exit = df_lstm_exit_T.T
 
-    return df
+    return df_lstm_exit
