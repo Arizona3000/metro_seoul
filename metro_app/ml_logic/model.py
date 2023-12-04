@@ -59,6 +59,7 @@ from tensorflow.keras.metrics import RootMeanSquaredError
 from keras.callbacks import EarlyStopping
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def initialize_lstm(df):
@@ -71,8 +72,8 @@ def initialize_lstm(df):
     X_train = np.array(train.iloc[:,:-24]).reshape((df.shape[0],int(df.shape[1]*0.8)-24,1))
     y_train = np.array(train.iloc[:,-24:]).reshape(df.shape[0],24,1)
 
-    X_test = np.array(test.iloc[:,:-24]).reshape((df.shape[0],int(df.shape[1]*0.2)-24,1))
-    y_test = np.array(test.iloc[:,-24:]).reshape(df.shape[0],24,1)                   #O.2 test split
+    X_test = np.array(test.iloc[:,:-24]).reshape((df.shape[0],int(1 - (df.shape[1]*0.8))-24,1))
+    y_test = np.array(test.iloc[:,-24:]).reshape(df.shape[0],24,1)                    #O.2 test split
 
 
     model = Sequential()
@@ -140,8 +141,8 @@ def evaluate_lstm(model, X_test, y_test, batch_size = 32):
     metrics = model.evaluate(X_test, y_test, batch_size=batch_size,
         verbose=1)
 
-    loss = metrics["loss"]
-    rmse = metrics["root_mean_squared_error"]
+    loss = metrics[0]
+    rmse = metrics[1]
 
     return metrics
 
