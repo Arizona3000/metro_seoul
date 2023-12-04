@@ -46,7 +46,7 @@ def predict_prophet(model, days):
 
 
 ################################################################################
-                            # LSTM MODEL  #
+                            # LSTM MODEL
 ################################################################################
 
 
@@ -60,45 +60,34 @@ from keras.callbacks import EarlyStopping
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
 
-def df_to_X_y(df, window_size=8760):
-    """
-    Define X and y for lstm model with a specific number of observations
-    (window_size where 8760 = 24*7*52 -> one year of data )
-    """
-    df_as_np = df.to_numpy()
-    X = []
-    y = []
-    for i in range(len(df_as_np)-window_size):
-        row = [[a] for a in df_as_np[i:i+window_size]]
-        X.append(row)
-        label = df_as_np[i+window_size]
-        y.append(label)
-    return np.array(X), np.array(y)
 
-
-
-def initialize_lstm(input_shape: tuple, X, y,df):
+def initialize_lstm(df):
     """
-    Define train, test and validation split
+    Define train and test split
     Initialize the Neural Network with random weights
     """
-    X_train, y_train = X[:0.7*len(df)], y[:0.7*len(df)]                     #0.7 train split
-    X_val, y_val = X[0.7*len(df):0.8*len(df)], y[0.7*len(df):0.8*len(df)]   #0.1 val split
-    X_test, y_test =  X[0.8*len(df):], y[0.8*len(df):]                      #O.2 test split
+    train, test = df.iloc[:,:int(df.shape[1]*0.8)], df.iloc[:,int(df.shape[1]*0.8):]
+
+    X_train = np.array(train.iloc[:,:-24]).reshape((df.shape[0],int(df.shape[1]*0.8)-24,1))
+    y_train = np.array(train.iloc[:,-24:]).reshape(df.shape[0],24,1)
+
+    X_test = np.array(test.iloc[:,:-24]).reshape((df.shape[0],int(df.shape[1]*0.2)-24,1))
+    y_test = np.array(test.iloc[:,-24:]).reshape(df.shape[0],24,1)                   #O.2 test split
 
 
     model = Sequential()
 
-    model.add(InputLayer(input_shape))
+    model.add(InputLayer((X_train.shape[1], 1)))
+    model.add(LSTM(64, return_sequences= True))
     model.add(LSTM(64))
-    model.add(Dense(8, activation = 'relu'))
-    model.add(Dense(1, activation = 'linear'))
+    model.add(Dense(32, activation = 'relu'))
+    model.add(Dense(24, activation = 'linear'))
 
     model.summary()
 
     print("✅ Model initialized")
 
-    return model, X_train, y_train, X_val, y_val, X_test, y_test
+    return model, X_train, y_train, X_test, y_test
 
 
 
@@ -115,7 +104,13 @@ def compile_lstm(model, learning_rate = 0.01):
 
 
 
-def train_lstm(model, X_train, y_train, X_val, y_val, patience, epochs):
+def train_lstm(model,
+               X_train,
+               y_train,
+               batch_size=32,
+               patience=4,
+               epochs=1,
+               validation_split=0.3):
     """
     Train the LSTM model and select a specific patience and number of epochs
     """
@@ -123,31 +118,35 @@ def train_lstm(model, X_train, y_train, X_val, y_val, patience, epochs):
     es = EarlyStopping(monitor="val_loss", patience=patience, restore_best_weights=True, verbose=1)
 
 
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs = epochs, callbacks = [es, cp])
+    history = model.fit(X_train,
+                        y_train,
+                        batch_size = batch_size,
+                        validation_split=validation_split,
+                        epochs = epochs,
+                        callbacks = [es, cp],
+                        verbose =1)
     model = load_model('model/')
 
-    return model
+    return history, model
 
 
 
-def predict_lstm(model, X_train, y_train):
+def evaluate_lstm(model, X_test, y_test, batch_size = 32):
     """
     Predict the model on the train set and print a DataFrame comparing the
     predictions and the actual values
     """
-    train_predictions = model.predict(X_train).flatten()
 
-    train_results = pd.DataFrame(data ={'Train Predictions': train_predictions, 'Actuals': y_train})
+    metrics = model.evaluate(X_test, y_test, batch_size=batch_size,
+        verbose=1)
 
-    return train_results
+    loss = metrics["loss"]
+    rmse = metrics["root_mean_squared_error"]
+
+    return metrics
 
 
+def predict_lstm(model, X_train):
+    predictions = model.predict(X_train)
 
-def visualisation_lstm_train(train_results, interval):
-    """
-    Visualisation of the two trends on a specified interval (interval)
-    """
-    plt.figure(figsize=(16,9))
-    plt.plot(train_results['Train Predictions'][:interval])
-    plt.plot(train_results['Actuals'][:interval])
-    plt.show()
+    return predictions
