@@ -21,7 +21,9 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message":
+        "bienvenue sur l'api qui prédit l'affluence du métro de Séoul, créée par un groupe d'amis passionnés de bien-être dans les transports, convaincus qu'il existe des solutions durables à des conditions saines de transport en commun dans les grandes métropoles"}
+
 
 # http://localhost:8000/predict_seongsu?days=2
 
