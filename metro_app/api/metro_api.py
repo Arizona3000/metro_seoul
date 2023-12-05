@@ -7,10 +7,13 @@ from io import StringIO
 sys.path.append('/Users/thomas_metral/code/thomas-metral/metro_seoul/metro_app')
 sys.path.append('/Users/victor/code/Arizona3000/metro_seoul/metro_app')
 sys.path.append('/Users/victor/code/Arizona3000/metro_seoul')
+sys.path.append('/Users/victor/code/Arizona3000/metro_seoul/metro_app/ml_logic')
+
 
 from ml_logic.preprocess import general_preprocessing, model_data_preprocessing
-# from gcp.setup import view_file
+from gcp.setup import view_file
 from ml_logic.model import prophet_predict
+from ml_logic.data import get_data_frequency
 # import sys
 # sys.path.append('/Users/thomas_metral/code/thomas-metral/metro_seoul')
 
@@ -37,14 +40,53 @@ def predict_seongsu(days:int):
     return prediction.to_dict('list')
 
 
-# @app.get('/testvic')
-# def testvic():
+@app.get('/home')
+def testvic():
 
-#     prediction_csv_bytes = view_file(f'data/all_predictions.csv', '/Users/victor/gcp/metro-seoul-86af79318438.json')
-#     prediction_csv = pd.read_csv(StringIO(str(prediction_csv_bytes,'utf-8')))
-#     prediction_csv2 = prediction_csv[['station_name', 'station_number', 'line', 'ds', 'MSTL', 'lat', 'lng']]
+    prediction_csv_bytes = view_file(f'data/all_predictions.csv', '/Users/victor/gcp/metro-seoul-86af79318438.json')
+    prediction_csv = pd.read_csv(StringIO(str(prediction_csv_bytes,'utf-8')))
+    prediction_csv2 = prediction_csv[['station_name', 'station_number', 'line', 'ds', 'MSTL', 'lat', 'lng']]
+    prediction_csv2 = prediction_csv2.drop_duplicates()
+    return prediction_csv2.to_dict('list')
 
-#     return prediction_csv2.to_dict('list')
+
+@app.get('/home/station')
+def model_station(station_a: int, days:int):
+
+    model_pkl = view_file(f'models/model_station_{station_a}.pkl', '/Users/victor/gcp/metro-seoul-86af79318438.json')
+    model = pickle.loads(model_pkl)
+
+    prediction = prophet_predict(model=model, days=days)
+
+    # test = station_b
+
+    prediction['day'] = prediction['ds'].dt.day_name()
+
+    #print(prediction)
+
+    dict_pred = prediction.to_dict('list')
+    print('pred_dict done')
+
+    crowd_str = view_file('data/crowd2020-2023.csv', '/Users/victor/gcp/metro-seoul-86af79318438.json')
+    crowd = pd.read_csv(StringIO(str(crowd_str,'utf-8')))
+
+    print('crowd imported')
+
+
+    average_per_day = get_data_frequency(crowd, '2023-04-01')
+
+    print('average_per_day done')
+
+    average_day_dict = average_per_day.to_dict('list')
+    #print(dict_pred | average_day_dict)
+
+    dict_final = {'prediction_station' : dict_pred,
+                  'average_per_day': average_day_dict}
+
+    return dict_final
+
+
+
 
 # @app.get('/testvicmodel')
 # def testvicmodel(station : int, days : int):
