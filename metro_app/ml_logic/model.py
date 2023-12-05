@@ -72,10 +72,10 @@ def prophet_train_predict(df, days=3,
 
     return model, mape_prophet, prediction
 
-def prophet_predict(model, df, days):
+def prophet_predict(model, days): #removed df
 
-    data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
-    data_test = data.iloc[-24*days:]
+    # data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
+    # data_test = data.iloc[-24*days:]
 
     # Create a future dataframe for predictions
     future = model.make_future_dataframe(periods=days*24, include_history=False, freq='h')  # Forecasting for the next week
@@ -92,11 +92,11 @@ def prophet_predict(model, df, days):
     forecast.loc[forecast['is_closed'] != 0, 'yhat'] = 0
     forecast.loc[forecast['morning_peak'] > 2, 'yhat'] = forecast.loc[forecast['morning_peak'] > 2, 'yhat'] * 1.2
     forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] = forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] * 1.18
-    prediction = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+    prediction = forecast[['ds', 'yhat']]
 
-    mape_prophet = mape(prediction['yhat'].values, data_test['y'].values)
+    # mape_prophet = mape(prediction['yhat'].values, data_test['y'].values)
 
-    return mape_prophet, prediction
+    return prediction
 
 
 def plot_evaluate(df, prediction, days=3):
