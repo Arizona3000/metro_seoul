@@ -72,6 +72,33 @@ def prophet_train_predict(df, days=3,
 
     return model, mape_prophet, prediction
 
+def prophet_predict(model, days): #removed df
+
+    # data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
+    # data_test = data.iloc[-24*days:]
+
+    # Create a future dataframe for predictions
+    future = model.make_future_dataframe(periods=days*24, include_history=False, freq='h')  # Forecasting for the next week
+    future['is_morning_peak'] = ((future['ds'].dt.hour >= 8) & (future['ds'].dt.hour <= 9) & (future['ds'].dt.dayofweek <= 5)).astype(int)
+    future['is_afternoon_peak'] = ((future['ds'].dt.hour >= 17) & (future['ds'].dt.hour <= 19) & (future['ds'].dt.dayofweek <= 5)).astype(int)
+    future['is_closed'] = ((future['ds'].dt.hour >= 0) & (future['ds'].dt.hour <= 4)).astype(int)
+    future['is_weekend'] = (future['ds'].dt.dayofweek >= 5).astype(int)
+    print(future.columns)
+
+    print(future.head(20))
+
+    # Generate predictions
+    forecast = model.predict(future)
+    forecast.loc[forecast['is_closed'] != 0, 'yhat'] = 0
+    forecast.loc[forecast['morning_peak'] > 2, 'yhat'] = forecast.loc[forecast['morning_peak'] > 2, 'yhat'] * 1.2
+    forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] = forecast.loc[forecast['afternoon_peak'] > 2, 'yhat'] * 1.18
+    prediction = forecast[['ds', 'yhat']]
+
+    # mape_prophet = mape(prediction['yhat'].values, data_test['y'].values)
+
+    return prediction
+
+
 def plot_evaluate(df, prediction, days=3):
 
     data = df.rename(columns={'datetime':'ds', 'value' : 'y'})
