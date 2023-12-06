@@ -1,2 +1,11 @@
+scikit-learn
+pandas
+numpy
 fastapi
 uvicorn
+requests
+google-cloud-storage
+gcloud==0.18.3
+Prophet
+plotly
+seaborn

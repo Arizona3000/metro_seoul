@@ -2,7 +2,7 @@
 
 import pandas as pd
 import io
-from preprocess import general_preprocessing
+from metro_app.ml_logic.preprocess import general_preprocessing
 from gcp.setup import view_file
 import numpy as np
 import plotly.express as px
