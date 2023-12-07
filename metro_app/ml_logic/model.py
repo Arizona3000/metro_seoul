@@ -56,9 +56,9 @@ def prophet_train_predict(df, days=3,
     future['is_afternoon_peak'] = ((future['ds'].dt.hour >= 17) & (future['ds'].dt.hour <= 19) & (future['ds'].dt.dayofweek <= 5)).astype(int)
     future['is_closed'] = ((future['ds'].dt.hour >= 0) & (future['ds'].dt.hour <= 4)).astype(int)
     future['is_weekend'] = (future['ds'].dt.dayofweek >= 5).astype(int)
-    print(future.columns)
+    #print(future.columns)
 
-    print(future.head(20))
+    #print(future.head(20))
 
     # Generate predictions
     forecast = model.predict(future)
@@ -83,9 +83,9 @@ def prophet_predict(model, days): #removed df
     future['is_afternoon_peak'] = ((future['ds'].dt.hour >= 17) & (future['ds'].dt.hour <= 19) & (future['ds'].dt.dayofweek <= 5)).astype(int)
     future['is_closed'] = ((future['ds'].dt.hour >= 0) & (future['ds'].dt.hour <= 4)).astype(int)
     future['is_weekend'] = (future['ds'].dt.dayofweek >= 5).astype(int)
-    print(future.columns)
+    #print(future.columns)
 
-    print(future.head(20))
+    #print(future.head(20))
 
     # Generate predictions
     forecast = model.predict(future)

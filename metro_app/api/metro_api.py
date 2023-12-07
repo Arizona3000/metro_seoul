@@ -18,33 +18,47 @@ from metro_app.ml_logic.data import get_data_frequency
 
 app = FastAPI()
 
+app.state.crowd_str = view_file('data/crowd2020-2023.csv')
+
 @app.get("/")
 async def root():
     return {"message":
         "bienvenue sur l'api qui prédit l'affluence du métro de Séoul, créée par un groupe d'amis passionnés de bien-être dans les transports, convaincus qu'il existe des solutions durables à des conditions saines de transport en commun dans les grandes métropoles"}
 
 
+@app.get("/ping")
+def pong():
+    return {"ping": "pong!"}
+
 # http://localhost:8000/predict_seongsu?days=2
 
-@app.get('/predict_seongsu')
-def predict_seongsu(days:int):
+# @app.get('/predict_seongsu')
+# def predict_seongsu(days:int):
 
-    # load pickle model
-    print("loading model...")
-    pickled_model = pickle.load(open('model_test.pkl', 'rb'))
-    print("loading done.")
+#     # load pickle model
+#     print("loading model...")
+#     pickled_model = pickle.load(open('model_test.pkl', 'rb'))
+#     print("loading done.")
 
-    #result = model.predict(data reshaped)
-    prediction = prophet_predict(pickled_model, days=days)
+#     #result = model.predict(data reshaped)
+#     prediction = prophet_predict(pickled_model, days=days)
 
-    # return the result data as dict
-    return prediction.to_dict('list')
+#     # return the result data as dict
+#     return prediction.to_dict('list')
 
 
 @app.get('/home')
-def testvic():
+def testvic(group:str):
 
-    prediction_csv_bytes = view_file(f'data/all_predictions.csv')
+    if group == 'entry':
+        prediction_csv_bytes = view_file(f'data/all_predictions_entry.csv')
+
+    elif group =='exit':
+        prediction_csv_bytes = view_file(f'data/all_predictions_exit.csv')
+
+    else:
+        prediction_csv_bytes = view_file(f'data/all_predictions.csv')
+
     prediction_csv = pd.read_csv(StringIO(str(prediction_csv_bytes,'utf-8')))
     prediction_csv2 = prediction_csv[['station_name', 'station_number', 'line', 'ds', 'MSTL', 'lat', 'lng']]
     prediction_csv2 = prediction_csv2.drop_duplicates()
@@ -52,28 +66,50 @@ def testvic():
 
 
 @app.get('/home/station')
-def model_station(station_a: int, days:int):
+def model_station(station: int, days:int, pred:str, group:str):
 
-    model_pkl = view_file(f'models/model_station_{station_a}.pkl')
-    model = pickle.loads(model_pkl)
+    if group == 'entry': # Entry
+        model_pkl = view_file(f'models/entry/model_station_{station}.pkl')
+        model = pickle.loads(model_pkl)
+
+    elif group == 'exit': # Exit
+        model_pkl = view_file(f'models/exit/model_station_{station}.pkl')
+        model = pickle.loads(model_pkl)
+
+    else: # All
+        model_pkl = view_file(f'models/model_station_{station}.pkl')
+        model = pickle.loads(model_pkl)
 
     prediction = prophet_predict(model=model, days=days)
     prediction['day'] = prediction['ds'].dt.day_name()
+
+    if pred == 'tmrw': # tmrw
+        prediction = prediction[(prediction['ds']>'2023-06-29') & (prediction['ds']<'2023-06-30')]
+
+    if pred == 'aftmrw': # After tmrw
+        prediction = prediction[(prediction['ds']>'2023-06-30')]
+
+    else: # Today
+        prediction = prediction.head(24)
+
 
     dict_pred = prediction.to_dict('list')
     print('pred_dict done')
 
     #Frequency per day of the week
 
-    crowd_str = view_file('data/crowd2020-2023.csv')
+    #crowd_str = view_file('data/crowd2020-2023.csv')
+    crowd_str = app.state.crowd_str
+    assert crowd_str is not None
     crowd = pd.read_csv(StringIO(str(crowd_str,'utf-8')))
     print('crowd imported')
 
     average_per_day = get_data_frequency(crowd, '2023-04-01')
+    average_per_day = average_per_day[average_per_day['station_number']==station]
     print('average_per_day done')
+
     average_day_dict = average_per_day.to_dict('list')
     #print(dict_pred | average_day_dict)
-
 
     #Itineraire
 
