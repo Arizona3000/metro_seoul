@@ -10,6 +10,6 @@ All data worked with comes from the Korean Governement open data.
 ## Models used during the study:
 Auto-Arima, Prophet, LSTM
 
-##Deliverables
+## Deliverables
 API using FastAPI, and streamlit (located in another directory)
 
