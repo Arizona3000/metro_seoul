@@ -7,16 +7,13 @@ def cred():
     Get access to your account by giving identification key\n
     path_to_json_key --> path to your json key
     """
-    #credentials = ServiceAccountCredentials.from_json_keyfile_name(path_to_json_key,
-                                                             #  scopes=['https://www.googleapis.com/auth/cloud-platform'])
     return storage.Client()
 
 def upload(pickle, file_name : str):
     """
     Upload a file on the bucket 'seoul_bucket', from string \n
-    file_path --> your path to the file you want to upload \n
+    pickle --> what you want to upload \n
     file_name --> the name you want to give to your file\n
-    path_to_json_key --> path to your json key\n
     """
     try:
         client = cred()
@@ -32,9 +29,8 @@ def upload(pickle, file_name : str):
 def upload_file(file, file_name : str):
     """
     Upload a file on the bucket 'seoul_bucket', from file name\n
-    file_path --> your path to the file you want to upload \n
+    file --> file you want to upload \n
     file_name --> the name you want to give to your file\n
-    path_to_json_key --> path to your json key\n
     """
     try:
         client = cred()
@@ -50,9 +46,8 @@ def upload_file(file, file_name : str):
 def upload_from_file(file, file_name : str):
     """
     Upload a file on the bucket 'seoul_bucket', from file\n
-    file_path --> your path to the file you want to upload \n
+    file --> your path to the file you want to upload \n
     file_name --> the name you want to give to your file\n
-    path_to_json_key --> path to your json key\n
     """
     try:
         client = cred()
@@ -70,7 +65,6 @@ def download(destination_file_name : str, file_name : str):
     Download a file on the bucket 'seoul_bucket'\n
     destination_file_name --> name and destination of the file you download\n
     file_name --> the name of the file\n
-    path_to_json_key --> path to your json key\n
     """
     try:
         client = cred()
@@ -84,9 +78,7 @@ def download(destination_file_name : str, file_name : str):
 def view_file(file_name : str):
     """
     View a file on the bucket 'seoul_bucket'\n
-    destination_file_name --> name and destination of the file you download\n
     file_name --> the name of the file\n
-    path_to_json_key --> path to your json key\n
     """
     try:
         client = cred()

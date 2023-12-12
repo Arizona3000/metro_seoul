@@ -29,13 +29,11 @@ def get_frequency_graph(df, date_for_average: str, date_for_pred: str, day: str,
     frequency = get_data_frequency(df_for_avegarge, date_for_average)
     frequency_ss = frequency[(frequency['day']==day) & (frequency['station_name'] == station) & (frequency['line']==line)]
     frequency_ss = frequency_ss.reset_index()
-    #print(frequency_ss)
-
 
     prepro_df =general_preprocessing(df_for_pred)
     seouls_s = prepro_df[(prepro_df['date'] == date_for_pred) & (prepro_df['station_name']==station) & (prepro_df['line']==line)]
     seouls_station = seouls_s.groupby(['date','station_name'])[seouls_s.columns[5:]].sum().reset_index()
-    #print(seouls_station)
+
 
     # Create a grouped bar chart using plotly.graph_objects
     fig = go.Figure()
